@@ -9,13 +9,13 @@ This repo is organized as follows:
 
 # Inputs 
 
-Inputs contain data that are unchanged from their original.
+Inputs contain data that are unchanged from their original. 
 
-## data 
 The `data` folder contains the all the data I used. 
 The 2016-2019 NCVS data is obtained through the National Archive of Criminal Justice Data and the Institute for
 Social Justice Research at the University of Michigan. The data for each year is freely available to download at the following link, but requires the user to register for an account with them or login through Google or ORCID:
 https://www.icpsr.umich.edu/web/NACJD/series/95?start=50&SERIESQ=95&ARCHIVE=NACJD&PUBLISH_STATUS=PUBLISHED&sort=TITLE_SORT%20asc&rows=50
+
 It is available for download in R format, and I saved the data for each year in a corresponding folder (i.e. 2016 data in a folder called "2016"). It also included the codebook and other literature that might be of interest. Note: I used the regular version of 2016, not the "revised". 
 
 # Scripts 
