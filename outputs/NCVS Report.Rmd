@@ -1,0 +1,305 @@
+---
+title: "NCVS Report"
+author: "Rebecca Yang"
+date: "December 21, 2020"
+output: pdf_document
+abstract: |
+  | A large proportion of crime in the United States goes unreported to police; this is especially true for cases of sexual assault. In this paper, I investigate the features of incidents that make them more or less likely to be reported to the police, as well as the effect of the #MeToo social movement on the reporting of sexual crime. Initial results from a logistic regression model found that age of the victime, the type of crime, and injuries were significant, but did not find a difference for sexual crimes that occurred before and after the start of the #MeToo movement.  
+  |
+  | **Keywords:** National Crime Victimization Survey, logistic regression, #MeToo, crime reporting
+header-includes:
+  - \setlength{\parindent}{2em}
+  - \setlength{\parskip}{1em}
+  - \usepackage{float}
+bibliography: references.bib
+nocite: | 
+  @tidyverse, @broom,  @kableExtra, @lme4, @R, @markdown, @lubridate
+
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, dev="cairo_pdf", fig.align = "center", out.width = "70%")
+library(tidyverse) # loading required packages 
+library(lme4)
+library(lubridate)
+library(here)
+library(kableExtra)
+load(here("outputs/inc_dat.rda")) # loading data created from "data.cleaning.R" 
+```
+
+# Introduction
+
+If a tree falls in a forest, but doesn't make a sound, did it even fall? The same question can be posed for crimes — if a crime happens, but no one reports it to the police, did it even happen? The answer is no, at least in the eyes of the authorities. Incidents can go unreported for a myriad of reasons, such as inconvenience of the reporting process, lack of faith in the police's ability to help, apathy towards the crime, or not wanting to revisit a traumatic experience, to name a few. As such, there exists a gap in the data between crime as it is reported and crime as it occurs in the United States. In this paper, I investigated the factors that contribute to the likelihood that a crime is reported, at the levels of both the incidents and the victims. I was also interested to see whether or not the #MeToo movement had an effect on the propensity to report a sexual assault. In October 2017, the MeToo hashtag trended on Twitter, starting a social movement that jump started the national conversation on the the toxic culture of sexual harassment and assault. In addition to thousands sharing their personal experiences online, several high profile men were unseated from power as a result of the courage of women to publicly speak out against them.
+
+To do this, I fitted a multilevel logistic regression model using data from the 2016-2019 iterations of the National Crime Victimization Survey (NCVS). The NCVS is a national survey that asks respondents about all the victimizations they experienced, not just the ones that were reported to the police. The response variable was whether the crime was reported to the police or not, and predictors were the age of the victim, the type of crime (i.e. theft, burglary, etc.), whether it was attempted or completed, whether it resulted in injury, and whether it occurred before or after the start of the #MeToo movement. It was found  and #MeToo was not found to have had a significant effect on sexual crimes. 
+
+That being said, these results should be taken with a grain of salt, as further testing suggested the lack of important predictors in the model. These could either be information that is collected by the survey that I failed to consider, or information that the survey fails to capture. For example, respondents may feel similar hesitation towards reporting their experiences to the NCVS that they feel towards the police. In addition, reporting to the police is a very high stakes decision, and thereby a very high standard by which to measure the effect of the movement. 
+
+In the following sections, I describe the survey data, the model fitting process, and results. Then, I discuss the results and conclude with weaknesses and next steps. 
+
+
+# Data
+
+The National Crime Victimization Survey (NCVS) is survey carried out by the Bureau of Justice Statistics in the United States, and is one of the two main avenues through which crime in the US is measured [@ncvs2019; @ncvs2018; @ncvs2017; @ncvs2016]. The other is the Uniform Crime Reporting system (it is currently in the process of being phased out and replaced by the National Incident-Based Reporting System), which consists of crimes as they are reported by police departments across the country. The main distinction between this and the NCVS is that the NCVS focuses on victimizations; this includes incidents that were not reported to the police. As such, the NCVS provides better insight on the true levels of crime, and provides more details on each incident. It also aims to collect information about the repercussions that victims of crime experience and to track changes in crime over time. I used the NCVS from 2016-2019, since I wanted to compare between time periods. 
+
+That being said, the same reasons for not reporting a crime to the police can extend to reporting a crime to the NCVS. While the survey aims to foster a safe space for victims, some may still be averse to sharing their personal experiences. Similarly, people who do not want to disclose incidents to the police may also not be inclined respond to the survey. It should also be noted that these reports are not subject to verification, and are solely based on the respondent's recollection. 
+
+The NCVS employs a multistage cluster sampling design, as well as a rotating panel design. First, 1,987 primary sampling units (PSUs) consisting of at least 7,500 people are defined geographically. Then, strata are formed from these PSUs. If a PSU is large enough, it forms its own strata; these PSUs are included in the sample for certain. Otherwise, 2-3 similar PSUs are grouped together to form strata. Similarity is measured according to the census, American Community Survey, and local crime data. For these, strata, a single PSU is selected, with PSUs with larger populations having higher probabilities of selection. Then, systematic random sampling is employed to select a sample of households or group quarters. This means there is a rule as to how subjects are selected (i.e. as every fourth household). All members of the household aged 12 and older are invited to participate in the survey. The rotating panel design means that households are randomly selected to be in the sample and interviewed every six months for three years. There are six different panels at any point in the survey, and a different panel is interviewed each month in the six-month cycle.
+
+It should also be pointed out that not everyone in the sample has been a victim of a crime. The data I used was incident-level data, which only includes victims of crimes. This included a total of 44,481 records, of which 777 were of a sexual nature. These included: completed rape, attempted rape, sexual assault with serious assault, sexual assault with minor assault, sexual assault without injury, unwanted sexual contact without force, verbal threat of rape, and verbal threat of sexual assault. In addition, it is possible that multiple incidents are reported from the same respondent, especially due to the rotating panel design. For these 44,481 incidents, there were 32,079 unique respondents behind them. 
+
+
+```{r}
+inc_dat %>%  # table of crime distributions 
+  count(crime_class) %>% 
+  mutate(prop = paste(round(n/sum(n)*100), "%", sep = ""),
+         crime_class = str_to_title(crime_class),
+         crime_class = ifelse(crime_class == "Mtr_veh", "Motor Vehicle Theft", crime_class)) %>%
+  rename("Type of Crime" = crime_class, ) %>% 
+  kbl(caption = "Distribution of Types of Crime", align = c("lrr")) %>%
+  kable_styling(bootstrap_options = c("condensed", "striped")) %>% 
+  kable_styling(latex_options = "HOLD_position")
+
+inc_dat %>%  # sample demographics table for age
+  count(age_group) %>% 
+  mutate(prop = paste(round(n/sum(n)*100), "%", sep = "")) %>%
+  rename(`Age Group` = age_group, "Proportion" = prop) %>%
+  kbl(caption = "Sample Demographics - Age", align = c("lrr")) %>%
+  kable_styling(bootstrap_options = c("condensed", "striped")) %>% 
+  kable_styling(latex_options = "HOLD_position")
+
+inc_dat %>%   # sample demographics table for sex
+  count(sex) %>% 
+  mutate(prop = paste(round(n/sum(n)*100), "%", sep = "")) %>%
+  rename(`Sex` = sex, "Proportion" = prop) %>%
+  kbl(caption = "Sample Demographics - Sex", align = c("lrr")) %>%
+  kable_styling(bootstrap_options = c("condensed", "striped")) %>% 
+  kable_styling(latex_options = "HOLD_position")
+
+
+```
+
+```{r, fig.cap = "Motor vehicle thefts were the most reported"}
+library(rcartocolor)
+mycols <- carto_pal(10, "Prism")
+theme_set(theme_minimal())
+
+inc_dat %>%  # graph of reporting rates for crime types
+  count(response, crime_class) %>% 
+  group_by(crime_class) %>% 
+  mutate(total = sum(n)) %>% 
+  filter(response == 1) %>%
+  ungroup() %>% 
+  mutate(rate = n/total, 
+         prop = total/sum(total)) %>% 
+  ggplot(aes(x = crime_class, y = rate*100, fill = crime_class)) + 
+  geom_bar(stat = "identity") +
+  labs(x = "Crime Type", y = "Percentage Reported (%)", title = "Reporting Rates by Crime Type") +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "none") +
+  scale_fill_manual(values = mycols) +
+  geom_text(aes(label = paste(round(rate*100), "%", sep = ""), vjust = -0.5), size = 4) + 
+  scale_y_continuous(limits = c(0,85))
+
+
+```
+
+# Methods
+
+Since my outcome of interest takes on only two values—whether a crime was reported to the police or not—I fit a logistic regression model, which models the odds of a crime being reported as a linear function of the predictor variables. 
+
+My model had multiple levels to reflect the structure in which the data was collected. Each record in the data represents a victimization experienced by the respondent, so each respondent could have multiple entries. In addition, since the survey features a rotating panel design, the same respondents were surveyed over time. I added a random intercept term for each respondent to account for differences between respondents that may affect all of their responses. 
+
+For the possible predictor variables, I considered the type of crime, whether it resulted in an injury, and the relationship of the victim and the offender. I also considered the age and sex of the victim (the respondent). These are all categorical variables, which I constructed myself (except for sex), since there were many options in the original data. For example, the types of crime were also condensed into six main categories, which the NCVS uses in its own reports: robberies, burglaries, sexual assault, assault, theft, or motor-vehicle theft. Verbal threats of these crimes are included as well, also in the example of the NCVS. For the victim's relationship with the offender, I condensed this into just two broad categories: known or unknown. The original options included spouse, parent, siblings, employers, neighbors, schoolmates, and friends, appropriate groupings were not obvious, and I did not want to distort the results through any improper groupings. My special predictor of interest was whether the crime occurred before or after the start of the #MeToo movement, which is officially dated as October 15, 2017. Crimes that occurred during or before the month of October 2017 were considered as predating the movement. The dates used to determine this were the month and year of the incident as reported by the respondent, not the time of the survey. 
+
+```{r}
+vars <- c("Type of Crime", "Injury", "Relation", "Age Group", "Sex", "MeToo")
+desc <- c("Robbery, Burglary, Sexual Assault, Assault, Theft, Motor-vehicle Theft",  "Yes, No", "Yes (known), No (unkown)", "Under 18, 18-34, 35-49, 50-64, over 65", "Male, Female", "Pre, Post")
+
+tibble(Variables = vars, Description = desc)  %>% 
+  kbl(caption = "Variable Descriptions", align = c("lrr")) %>%
+  kable_styling(bootstrap_options = c("condensed", "striped")) %>% 
+  kable_styling(latex_options = "HOLD_position")
+```
+
+
+The model was fitted using the `glmer` function from the `lme4` package [@lme4] in the statistical software `R` [@R]. When fitting a regression model survey data, it is important to consider the design on the survey, which can be done through the `svyglm` and `svydesign` functions in the `survey` package [@survey]. However, to my knowledge, it currently does not support multilevel models. This left me with a choice between accounting for the survey design, or the dependence of the data. I chose the latter, as it is a fundamental assumption of the logistic regression model.
+
+To select the final model, I fitted a series of models using different combinations of the above variables, and assessed them based on their relative AIC values. Type of crime and MeToo were included in each because they were the main variables of interest. The interaction term for these was included because I wanted to compare sex crimes with the other types of crime, and the effect of MeToo on sex crimes specifically.
+
+# Results
+```{r}
+#  candidate model fitting - some take a long time to load, so I saved them as files and loaded them in
+# intercept only
+# fit1 <- glmer(response ~ (1|id),
+#               data = inc_dat,
+#               family = "binomial",
+#               control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=3e5)))
+# save(fit1, file = "fit1.rda")
+# 
+# # # crime class
+# fit2 <- glmer(response ~ (1|id) + crime_class*me_too,
+#               data = inc_dat,
+#               family = "binomial",
+#               control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=3e5)))
+# save(fit2, file = "fit2.rda")
+
+# # crime class, age group 
+# fit3 <- glmer(response ~ (1|id) + crime_class*me_too + age_group,
+#               data = inc_dat,
+#               family = "binomial",
+#               control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=3e5)))
+# save(fit3, file = "fit3.rda")
+# 
+# fit6 <- glmer(response ~ (1|id) + me_too*crime_class + sex,
+#              data = inc_dat,
+#                family = "binomial",
+#                control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=3e5)))
+# save(fit6, file = "fit6.rda")
+# 
+# # crime class, age group, relation
+# fit4 <- glmer(response ~ (1|id) + me_too*crime_class + age_group + known,
+#               data = inc_dat,
+#               family = "binomial",
+#               control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=3e5)))
+# save(fit4, file = "fit4.rda")
+
+
+# # crime class, age group, injury 
+#  fit5 <- glmer(response ~ (1|id) + me_too*crime_class + age_group + known + injury,
+#               data = inc_dat,
+#               family = "binomial",
+#               control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=3e5)))
+# save(fit5, file = "fit5.rda")
+
+# fit7 <- glmer(response ~ (1|id) + me_too*crime_class + age_group + injury,
+#               data = inc_dat,
+#               family = "binomial",
+#               control=glmerControl(optimizer="bobyqa",optCtrl=list(maxfun=3e5)))
+# save(fit7, file = "fit7.rda")
+
+load(here("outputs/fit1.rda"))
+aic1 <- AIC(logLik(fit1))
+
+load(here("outputs/fit2.rda"))
+aic2 <- AIC(logLik(fit2))
+
+load(here("outputs/fit3.rda"))
+aic3 <- AIC(logLik(fit3)) 
+
+load(here("outputs/fit4.rda"))
+aic4<- AIC(logLik(fit4))
+
+load(here("outputs/fit6.rda"))
+aic6 <- AIC(logLik(fit6))
+
+load(here("outputs/fit7.rda"))
+aic7 <- AIC(logLik(fit7))
+
+Models <- c("intercept only", "crime type * MeToo", "crime type * MeToo + sex", "crime type * MeToo + age group", 
+            "crime class * MeToo + age group + known", "crime_class * MeToo + age group + injury")
+AICs <- c(aic1, aic2, aic6, aic3, aic4, aic7)
+tibble(Models, AICs) %>%
+  kbl(caption = "Model Comparisons", align = c("lr")) %>%
+  kable_styling(bootstrap_options = c("condensed", "striped")) %>% 
+  kable_styling(latex_options = "HOLD_position")
+```
+A comparison of the candidate models and their AIC scores indicated that age group and injuries were important to the model. The final model in its entirety is as follows:
+
+$$\frac{p}{1-p}  = \text{logit}^{-1}(\alpha_0 + \alpha_{id[i]} + \beta_1(\text{MeToo}_{ij}) + \beta_2(\text{theft}_{ij}) + \beta_3(\text{MotorVehicle}_{ij}) + \beta_4(\text{burglary}_{ij}) 
++ \beta_5(\text{assault}_{ij}) + ) + $$
+$$ \beta_6(\text{robbery}_{ij}) + \beta_7(\text{AgeUnder18}_{i}) +\beta_8(\text{Age35-49}_{i}) + \beta_9(\text{Age50-64}_{i})+ \beta_{10}(\text{AgeOver65}_{i}) + \beta_{11}(\text{injury}_{ij})+$$
+$$\beta_{12}(\text{sex}_{ij})(\text{MeToo}_i) + \beta_{13}(\text{theft}_{ij})(\text{MeToo}_{ij}) + \beta_{14}(\text{MotorVehicle}_{ij})(\text{MeToo}_i) + \beta_{15}(\text{burglary}_{ij})(\text{MeToo}_i)
++  $$
+$$ \beta_{16}(\text{assault}_{ij})(\text{MeToo}_i) + \beta_{17}(\text{robbery}_{ij})(\text{MeToo}_i) $$
+$p = \text{probability of reporting}$ 
+\[ \text{MeToo}_{ij} =
+  \begin{cases}
+  0 & \text{if After} \\
+ 1 & \text{if Before } \\
+  \end{cases}
+\]
+\[
+\text{burglary}_{ij}, \text{robbery}_{ij}, \text{assault}_{ij}, \text{theft}_{ij},  =
+  \begin{cases}
+  0 & \text{if No} \\
+ 1 & \text{if Yes } \\
+  \end{cases}
+\]
+\[
+\text{AgeUnder18}_{i}, \text{Age18-34}_{i}, \text{Age35-49}_{i},\text{Age50-64}_{i}, \text{AgeOver65}_{i}=
+  \begin{cases}
+  0 & \text{if No} \\
+ 1 & \text{if Yes } \\
+  \end{cases}
+\]
+\[
+\text{injury}_{ij} =
+ \begin{cases}
+  0 & \text{if No} \\
+ 1 & \text{if Yes } \\
+  \end{cases}
+  \]
+$$\alpha_{id} \sim N(0, \sigma_{id}^2)$$
+In other words, the odds of an incident being reported to the police depends on the victim's age, the type of crime, whether they were injured, and whether it occurred before the MeToo movement. 
+
+# Results
+
+```{r}
+library(broom.mixed)
+
+tidy(fit7) %>% 
+  filter(effect == "fixed") %>% 
+  select(term, estimate, std.error, p.value) %>% 
+  mutate(estimate = round(estimate, 3),
+         std.error = round(std.error, 3),
+         p.value = round(p.value, 3))  %>%
+  kbl(caption = "Model Results", align = c("lrrr")) %>%
+  kable_styling(bootstrap_options = c("condensed", "striped")) %>% 
+  kable_styling(latex_options = "HOLD_position")
+
+
+tidy(fit7) %>% 
+  filter(effect == "fixed") %>% 
+  select(term, estimate, std.error, p.value) %>%
+  mutate(estimate = round(exp(estimate), 3),
+         std.error = round(exp(std.error), 3),
+         p.value = round(p.value, 3))%>%
+  rename("exp(term)" = term) %>%
+  kbl(caption = "Model Results (Exp)", align = c("lrrr")) %>%
+  kable_styling(bootstrap_options = c("condensed", "striped")) %>% 
+  kable_styling(latex_options = "HOLD_position")
+```
+First, in order to interpret the results, the baseline for comparison needs to be established. In this case, the odds of a sexual assault crime being reported to the police after MeToo for a victim aged 18-34 is estimated to be 0.31, which indicates that it is over three times more likely for it to be unreported than reported. The odds are are comparison of the probability of reporting to the probability of not reporting, so odds greater than 1 mean that reporting is more likely, and vice versa. Other types of crime were found to have significantly (p<0.05) higher odds. Motor vehicle thefts were estimated to have odds that were 16 times higher, while other non-sexual assaults had twice as high odds. Robberies, which are thefts that do not directly involve the person, had odds that were four times as high. Incidents that resulted in an injury were predicted to have odds that were 2.5 times greater as well. On the other end, victims under the age of 18 had significantly lower odds; their odds were 70% lower compared to their counterparts aged 18-34. The odds of thefts being reported were 20% lower than sexual crimes as well. Interestingly, the model results suggest that sexual crimes that occurred before MeToo had lower odds of being reported. However, this result was not found to be statistically significant at all. 
+
+However, the performance of the model must be addressed before these results can carry any meaningful weight. 
+The overall accuracy of the model predictions was 81%, meaning that it correctly predicted the outcome in 81% of the incidents. But, taking a further look at this shows that the model performs unevenly for the two cases. It correctly predicted 96% of unreported incidents, but only managed to correctly identity 54% of reported incidents.
+```{r}
+p <- as.numeric(predict(fit7, type="response")>0.5)
+table <- table(p,inc_dat$response) 
+accuracy <- mean(p==inc_dat$response)
+
+rownames(table) = c("Predicted No", "Predicted Yes")
+colnames(table) = c("True No", "True Yes")
+
+table %>%
+  kbl(caption = "Prediction Accuracy", align = c("lrrr")) %>%
+  kable_styling(bootstrap_options = c("condensed", "striped")) %>%
+  kable_styling(latex_options = "HOLD_position")
+
+
+```
+
+
+# Discussion
+
+The results show that there remains an aversion to reporting crimes of a sexual nature to police, even in the post-MeToo world. However, this is by no means intended to question the indubitable influence of the movement. Rather, there are many reasons as to why it does not manifest in the model and its results. First, reporting to the police probably represents one of the highest levels of speaking out against an offender, 
+
+The lack of fit of the model can be attributed to several things. It could be due in part to the fact that there were less reported cases in the data, but most likely suggests the exclusion of important variables in the model. The raw data files have over a thousand variables, but I only tested a selection of them. For example, I did not consider at all the effect of an incident occurring on an American Indian reservation, or the effect of the offender holding a blunt object. So, while I exercised my best judgement to choose relevant ones, it is possible that some may have slipped through the cracks. While there are algorithmic methods of variable selection that can a large number of variables, this was not a viable option for this data because I had to manually adjust many of the variables. For example, there were initially over twenty types of crimes and locations that I condensed into broad categories. This is also another possible source of error; it is possible that I may have muddled some important information in this process. 
+
+In addition, as mentioned earlier, this model fails to account for the design of the survey. While I felt this was a necessary trade-off at the time, it does mean these results are not generalizable to all crime in the US since the sample has not been adjusted for non-respresentativeness. One possible solution for this is incorporating the survey weights provided by the survey into the model as suggested by @carle; this is something I would need to research further before implementing. 
+
+
+
+# References 
+
+

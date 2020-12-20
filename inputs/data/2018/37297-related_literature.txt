@@ -1,0 +1,63 @@
+Bibliography
+National Crime Victimization Survey, [United States], 2018
+
+This bibliography includes published and unpublished works that are related 
+to ICPSR study 37297. It includes works that are based on primary
+or secondary analysis of the data, or which describe or critique those
+data or the collection methodology. 
+
+If you publish a work or know of other works that are based on these data,
+please send the complete citation and name of the ICPSR study used to:
+icpsr-biblio-notify@umich.edu 
+
+
+1. Bureau of Justice Statistics, "Criminal Victimization, 2018 -
+Supplemental Tables." Washington, DC: Bureau of Justice Statistics, Jun
+2020.
+Full text PDF: https://bjs.gov/content/pub/pdf/cv18st_rev.pdf?utm_content=default&utm_medium=email&utm_source=govdelivery
+
+2. Bureau of Justice Statistics, "Violent Victimization by Race or
+Ethnicity, 2005-2019." Selected Findings. NCJ 255578, Washington, DC:
+Bureau of Justice Statistics, Oct 2020.
+Full text PDF: https://www.bjs.gov/content/pub/pdf/vvre0519.pdf
+
+3. Chalfin, Aaron; Hansen, Benjamin; Ryley, Rachel, "The Minimum Legal
+Drinking Age and Crime Victimization." NBER Working Paper 26051. Cambridge,
+MA: National Bureau of Economic Research, Jul 2019. DOI: 10.3386/w26051
+Abstract: https://www.nber.org/papers/w26051
+
+4. Lartey, Jamiles; Li, Weihua, "New FBI data: Violent crime still
+falling." Updated Sep 30, 2019, Accessed Jan 21, 2020.
+Full text: https://www.themarshallproject.org/2019/09/30/new-fbi-data-violent-crime-still-falling
+
+5. Morgan, Rachel E.; Oudekerk, Barbara A., "Criminal Victimization, 2018."
+Bulletin. NCJ 253043, Washington, DC: Bureau of Justice Statistics, Sep
+2019.
+Full text PDF: https://www.bjs.gov/content/pub/pdf/cv18.pdf
+
+6. Morgan, Rachel E.; Truman, Jennifer L., "Criminal Victimization, 2019."
+Bulletin. NCJ 255113, Washington, DC: Bureau of Justice Statistics, Sep
+2020.
+Full text PDF: https://www.bjs.gov/content/pub/pdf/cv19.pdf
+
+7. Oudekerk, Barbara A., "Violent Victimization by Race or Ethnicity, 2005-
+2019." Selected Findings. NCJ 255578, Washington, DC: Bureau of Justice
+Statistics, Oct 2020.
+Abstract: https://www.ncjrs.gov/app/publications/abstract.aspx?id=279815
+Full text PDF: https://www.bjs.gov/content/pub/pdf/vvre0519.pdf
+The overall number of violent victimizations decreased over this period by
+1.1 million (16 percent). The number of violent victimizations of Black
+persons decreased 32 percent, from 913,000 to 623,000. The number of
+violent victimizations against White persons declined 24 percent, from 4.8
+million to 3.6 million. Regarding the rate of violent victimizations from
+2005 to 2019, the overall decline was 26 percent, from 28.4 to 21.0
+victimizations per 1,000 U.S. residents age 12 or older. The rate of
+violent victimizations of Black persons fell 43 percent, from 32.7 to 18.7
+violent victimizations per 1,000 Black persons age 12 or older. The rate of
+violent victimization of White persons fell 24 percent, from 22.7 to 21.0
+victimizations per 1,000 White persons age 12 or older. 2 tables
+
+8. Wang, Ke; Chen, Yongqiu; Zhang, Jizhi; Oudekerk, Barbara A., "Indicators
+of School Crime and Safety: 2019." NCES 2020-063. NCJ 254485, Washington,
+DC: National Center for Education Statistics, Jul 2020.
+Full text PDF: https://www.bjs.gov/content/pub/pdf/iscs19.pdf
